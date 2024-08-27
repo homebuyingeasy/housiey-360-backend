@@ -23,3 +23,5 @@ yarn-error.log*
 *.log
 # local env files
 .env
+
+/uploads
