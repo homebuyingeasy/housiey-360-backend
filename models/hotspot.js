@@ -1,5 +1,5 @@
 module.exports = (sequelize, DataTypes) => {
-    const Hotspot = sequelize.define('hotsports', {
+    const Hotspot = sequelize.define('hotspots', {
       id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -39,10 +39,10 @@ module.exports = (sequelize, DataTypes) => {
       },
     });
   
-    Hotspot.associate = (models) => {
-      Hotspot.belongsTo(models.TourImage, { foreignKey: 'tour_image_id', as: 'tourImage' });
-      Hotspot.belongsTo(models.TourImage, { foreignKey: 'linked_tour_image_id', as: 'linkedTourImage' });
-      Hotspot.belongsTo(models.HotspotImage, { foreignKey: 'hotspot_image_id', as: 'hotspotImage' });
+    Hotspot.associate = function(models) {
+      Hotspot.belongsTo(models.TourImage, { as: 'tourImage', foreignKey: 'tour_image_id' });
+      Hotspot.belongsTo(models.TourImage, { as: 'linkedTourImage', foreignKey: 'linked_tour_image_id' });
+      Hotspot.belongsTo(models.HotspotImage, { as: 'hotspotImage', foreignKey: 'hotspot_image_id' });
     };
   
     return Hotspot;

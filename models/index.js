@@ -20,13 +20,23 @@ db.User = require('./user')(sequelize, Sequelize);
 db.Tour = require('./tour')(sequelize, Sequelize);
 db.TourImage = require('./tourImage')(sequelize, Sequelize);
 db.Hotspot = require('./hotspot')(sequelize, Sequelize);
+db.HotspotImage = require('./hotspotImage')(sequelize, Sequelize);
 
-// Associations
-db.Tour.hasMany(db.TourImage, { foreignKey: 'tourId', as: 'tourImages' });
-db.TourImage.belongsTo(db.Tour, { foreignKey: 'tourId', as: 'tours' });
+// Define Associations
+// A Tour can have many TourImages
+db.Tour.hasMany(db.TourImage, { as: 'tourImages', foreignKey: 'tourId' });
+db.TourImage.belongsTo(db.Tour, { as: 'tour', foreignKey: 'tourId' });
 
-db.TourImage.hasMany(db.Hotspot, { foreignKey: 'tour_image_id', as: 'hotspots' });
-db.Hotspot.belongsTo(db.TourImage, { foreignKey: 'tour_image_id', as: 'tourImage' });
-db.Hotspot.belongsTo(db.TourImage, { foreignKey: 'linked_tour_image_id', as: 'linkedTourImage' });
+// A TourImage can have many Hotspots
+db.TourImage.hasMany(db.Hotspot, { as: 'hotspots', foreignKey: 'tour_image_id' });
+db.Hotspot.belongsTo(db.TourImage, { as: 'tourImage', foreignKey: 'tour_image_id' });
+
+// A Hotspot can be linked to another TourImage
+db.TourImage.hasMany(db.Hotspot, { as: 'linkedHotspots', foreignKey: 'linked_tour_image_id' });
+db.Hotspot.belongsTo(db.TourImage, { as: 'linkedTourImage', foreignKey: 'linked_tour_image_id' });
+
+// A Hotspot can have one HotspotImage
+db.Hotspot.belongsTo(db.HotspotImage, { as: 'hotspotImage', foreignKey: 'hotspot_image_id' });
+db.HotspotImage.hasMany(db.Hotspot, { as: 'hotspots', foreignKey: 'hotspot_image_id' });
 
 module.exports = db;

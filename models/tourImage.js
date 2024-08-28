@@ -30,11 +30,11 @@ module.exports = (sequelize, DataTypes) => {
   );
 
   // Define associations
-  TourImage.associate = (models) => {
-    TourImage.belongsTo(models.Tour, { foreignKey: 'tourId', as: 'tours'});
-    TourImage.hasMany(models.Hotspot, { foreignKey: 'tour_image_id', as: 'hotspots' });
+
+  TourImage.associate = function (models) {
+    TourImage.hasMany(models.Hotspot, { as: 'hotspots', foreignKey: 'tour_image_id' });
+    TourImage.belongsTo(models.Tour, { foreignKey: 'tourId', as: 'tours' });
 
   };
-
   return TourImage;
 };

@@ -22,5 +22,9 @@ router.delete('/tours/:id', authenticateToken, tourController.deleteTour);
 // Delete a single image by ID
 router.delete('/tours/images/:id', authenticateToken, tourController.deleteTourImage);
 
+// Delete a single image by ID
+router.get('/tours/full/:id', authenticateToken, tourController.getFullRecordFromTourById);
+
+
 
 module.exports = router;
