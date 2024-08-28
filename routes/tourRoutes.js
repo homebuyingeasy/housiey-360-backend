@@ -10,6 +10,9 @@ router.post('/tours', authenticateToken, upload.array('images', 30), tourControl
 // Get all tours with their associated images
 router.get('/tours', authenticateToken, tourController.getTours);
 
+// Get all tours with their associated image for dashboard
+router.get('/tours/dashboard', authenticateToken, tourController.getToursForDashboard);
+
 // Get a specific tour by ID
 router.get('/tours/:id', authenticateToken, tourController.getTour);
 

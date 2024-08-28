@@ -61,6 +61,31 @@ exports.getTours = async (req, res) => {
   }
 };
 
+exports.getToursForDashboard = async (req, res) => {
+  try {
+    const tours = await db.Tour.findAll({
+      include: [
+        {
+          model: db.TourImage,
+          as: 'tourImages',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+          limit: 1, // Get only the first image
+        },
+        {
+          model: db.TourImage,
+          as: 'tourImages',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        }
+      ],
+      attributes: { exclude: ['createdAt', 'updatedAt'] },
+    });
+
+    res.status(200).json(tours);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 exports.updateTour = async (req, res) => {
   try {
     const { id } = req.params;
