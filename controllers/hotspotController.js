@@ -1,63 +1,77 @@
 const db = require('../models');
 
 exports.addHotspot = async (req, res) => {
-    try {
-        const { pitch, yaw, hfov, type, tour_image_id, name, hotspot_image_id, linked_tour_image_id } = req.body;
+  try {
+    const { pitch, yaw, hfov, type, tour_image_id, name, hotspot_image_id, linked_tour_image_id } = req.body;
 
-        // Validate the input (you can add more validation as needed)
-
-        // Create the hotspot
-        const hotspot = await db.Hotspot.create({
-            pitch,
-            yaw,
-            hfov,
-            type,
-            tour_image_id,
-            name,
-            hotspot_image_id,
-            linked_tour_image_id,
-        });
-
-        res.status(201).json(hotspot);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    // Check if tour_image_id exists
+    const tourImage = await db.TourImage.findByPk(tour_image_id);
+    if (!tourImage) {
+      return res.status(400).json({ message: 'Invalid tour_image_id' });
     }
+
+    // If linked_tour_image_id is provided, check if it exists
+    let linkedTourImage = null;
+    if (linked_tour_image_id) {
+      linkedTourImage = await db.TourImage.findByPk(linked_tour_image_id);
+      if (!linkedTourImage) {
+        return res.status(400).json({ message: 'Invalid linked_tour_image_id' });
+      }
+    }
+
+    // Create the hotspot
+    const hotspot = await db.Hotspot.create({
+      pitch,
+      yaw,
+      hfov,
+      type,
+      tour_image_id,
+      name,
+      hotspot_image_id,
+      linked_tour_image_id: linkedTourImage ? linkedTourImage.id : null // Ensure linked_tour_image_id is null if not valid
+    });
+
+    res.status(201).json(hotspot);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
 exports.getHotspotsByTourImageId = async (req, res) => {
-    try {
-      const { tour_image_id } = req.params;
-  
-      const hotspots = await db.Hotspot.findAll({
-        where: { tour_image_id },
-        include: [
-          {
-            model: db.TourImage,
-            as: 'tourImage',
-            attributes: ['id', 'url', 'name'],
-          },
-          {
-            model: db.TourImage,
-            as: 'linkedTourImage',
-            attributes: ['id', 'url', 'name'],
-          },
-          {
-            model: db.HotspotImage,
-            as: 'hotspotImage',
-            attributes: ['id', 'url', 'image_name'],
-          },
-        ],
-      });
-  
-      if (!hotspots.length) {
-        return res.status(404).json({ message: 'No hotspots found for this tour image.' });
-      }
-  
-      res.status(200).json(hotspots);
-    } catch (error) {
-      res.status(500).json({ message: error.message });
+  try {
+    const { tour_image_id } = req.params;
+
+    // Find all hotspots by tour_image_id with associated models
+    const hotspots = await db.Hotspot.findAll({
+      where: { tour_image_id },
+      include: [
+        {
+          model: db.TourImage,
+          as: 'tourImage',  // Make sure the alias matches the one defined in the association
+          attributes: ['id', 'url', 'name'],
+        },
+        {
+          model: db.TourImage,
+          as: 'linkedTourImage',  // Make sure the alias matches the one defined in the association
+          attributes: ['id', 'url', 'name'],
+        },
+        {
+          model: db.HotspotImage,
+          as: 'hotspotImage',  // Make sure the alias matches the one defined in the association
+          attributes: ['id', 'url', 'name'],
+        },
+      ],
+    });
+
+    if (hotspots.length === 0) {
+      return res.status(404).json({ message: 'No hotspots found for this tour image.' });
     }
-  };
+
+    res.status(200).json(hotspots);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
   
 exports.getHotspotById = async (req, res) => {
     try {
