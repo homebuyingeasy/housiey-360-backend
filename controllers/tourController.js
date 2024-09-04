@@ -4,27 +4,30 @@ const db = require('../models');
 exports.createTour = async (req, res) => {
   try {
     const { name, description } = req.body;
-
     if (!name) {
       return res.status(400).json({ message: 'Name is required.' });
     }
 
     const tour = await db.Tour.create({ name, description });
 
-    // Handle file uploads
+    // Process and save each uploaded image
     if (req.files && req.files.length > 0) {
-      const images = req.files.map(file => ({
-        name: file.filename,
-        url: `/uploads/${file.filename}`,
-        tourId: tour.id,
-      }));
-
-      await db.TourImage.bulkCreate(images);
+      const imageRecords = req.files.map((file, index) => {
+        return {
+          tourId: tour.id,
+          name: req.body[`imagesData[${index}]name`],
+          url: `/uploads/${file.filename}`,
+          order: Number(req.body[`imagesData[${index}]order`]),
+        };
+      });
+      // Save all imagesData in the database
+      await db.TourImage.bulkCreate(imageRecords);
     }
 
-    res.status(201).json(tour);
+    res.status(201).json({ message: 'Tour created successfully', tour });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.log(error, 'error.message')
+    res.status(500).json({ message: 'Server error', error });
   }
 };
 
@@ -100,26 +103,30 @@ exports.updateTour = async (req, res) => {
     // Update tour details
     await tour.update({ name, description });
 
-    // Handle file uploads if any
+    // Process and save each uploaded image
     if (req.files && req.files.length > 0) {
       // Delete old images
       await db.TourImage.destroy({ where: { tourId: id } });
 
-      // Add new images
-      const images = req.files.map(file => ({
-        name: file.filename,
-        url: `/uploads/${file.filename}`,
-        tourId: tour.id,
-      }));
+      const imageRecords = req.files.map((file, index) => {
+        return {
+          tourId: tour.id,
+          name: req.body[`imagesData[${index}]name`],
+          url: `/uploads/${file.filename}`,
+          order: req.body[`imagesData[${index}]order`],
+        };
+      });
 
-      await db.TourImage.bulkCreate(images);
+      // Add new images to the database
+      await db.TourImage.bulkCreate(imageRecords);
     }
 
-    res.status(200).json(tour);
+    res.status(200).json({ message: 'Tour updated successfully', tour });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
+
 
 exports.deleteTour = async (req, res) => {
   try {
