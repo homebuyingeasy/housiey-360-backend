@@ -131,12 +131,12 @@ exports.deleteTour = async (req, res) => {
     }
 
     // Delete associated images
-    await db.TourImage.destroy({ where: { tourId: id } });
+    await db.TourImage.destroy({ where: { tourId: parseInt(id) } });
 
     // Delete the tour
     await tour.destroy();
 
-    res.status(204).send();
+    res.status(200).send({message:"tour deleted", success:true});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
