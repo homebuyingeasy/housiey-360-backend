@@ -264,12 +264,12 @@ exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
                 {
                   model: db.HotspotImage,
                   as: 'hotspotImage',
-                  attributes: ['url'], // Select the hotspot image URL
+                  attributes: ['url', 'id'], // Select the hotspot image URL
                 },
                 {
                   model: db.TourImage,
                   as: 'linkedTourImage',
-                  attributes: ['name'], // Select the linked tour image name
+                  attributes: ['name', 'id'], // Select the linked tour image name
                 },
               ],
             },
@@ -281,12 +281,12 @@ exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
     if (!tour) {
       return res.status(404).json({ message: 'Tour not found' });
     }
-
     // Structure the response
     const tourResponse = [];
 
     tour.tourImages.forEach((tourImage, index) => {
       const sceneName = tourImage.name;
+      const tourId = tourImage.id;
       const scenePanoImg = tourImage.url;
 
       // Prepare the hotspots array
@@ -309,6 +309,7 @@ exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
       // Construct the scene object
       tourResponse[index] = {
         sceneName: sceneName,
+        tourId:tourId,
         scenePanoImg: scenePanoImg,
         initPitch: -2.7342254361971903, // Static value as per your example
         initYaw: -71.59834061057227,    // Static value as per your example
