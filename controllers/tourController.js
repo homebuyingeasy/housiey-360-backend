@@ -244,3 +244,80 @@ exports.getFullRecordFromTourById = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+
+exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Fetch the tour along with its associated tour images and hotspots
+    const tour = await db.Tour.findByPk(id, {
+      include: [
+        {
+          model: db.TourImage,
+          as: 'tourImages',
+          include: [
+            {
+              model: db.Hotspot,
+              as: 'hotspots',
+              include: [
+                {
+                  model: db.HotspotImage,
+                  as: 'hotspotImage',
+                  attributes: ['url'], // Select the hotspot image URL
+                },
+                {
+                  model: db.TourImage,
+                  as: 'linkedTourImage',
+                  attributes: ['name'], // Select the linked tour image name
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!tour) {
+      return res.status(404).json({ message: 'Tour not found' });
+    }
+
+    // Structure the response
+    const tourResponse = [];
+
+    tour.tourImages.forEach((tourImage, index) => {
+      const sceneName = tourImage.name;
+      const scenePanoImg = tourImage.url;
+
+      // Prepare the hotspots array
+      const hotSpotsArr = tourImage.hotspots.map((hotspot) => ({
+        pitch: hotspot.pitch,
+        lable: hotspot.name,
+        yaw: hotspot.yaw,
+        hfov: hotspot.hfov,
+        type: hotspot.type,
+        tour_image_id: hotspot.tour_image_id,
+        hotspot_image_id: hotspot.hotspot_image_id,
+        transition: hotspot.linkedTourImage ? hotspot.linkedTourImage.name : null,
+        arrow_image_url: hotspot.hotspotImage ? hotspot.hotspotImage.url : null,
+      }));
+      // Assigning order property to hotspots
+      hotSpotsArr.forEach((hotspot, index) => {
+        hotspot.order = index + 1;
+      });
+
+      // Construct the scene object
+      tourResponse[index] = {
+        sceneName: sceneName,
+        scenePanoImg: scenePanoImg,
+        initPitch: -2.7342254361971903, // Static value as per your example
+        initYaw: -71.59834061057227,    // Static value as per your example
+        hotSpotsArr: hotSpotsArr,
+      };
+    });
+
+    res.status(200).json(tourResponse);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
