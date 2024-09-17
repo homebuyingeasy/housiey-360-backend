@@ -109,14 +109,16 @@ exports.updateTour = async (req, res) => {
       await db.TourImage.destroy({ where: { tourId: id } });
 
       const imageRecords = req.files.map((file, index) => {
+        console.log(req.body[`imagesData[${index}]name`] + 'name');
+        console.log(Number(req.body[`imagesData[${index}]order`]) + 'order');
         return {
           tourId: tour.id,
           name: req.body[`imagesData[${index}]name`],
           url: `/uploads/${file.filename}`,
-          order: req.body[`imagesData[${index}]order`],
+          order: Number(req.body[`imagesData[${index}]order`]),
         };
       });
-
+      console.log(imageRecords + '++++++++++++++++')
       // Add new images to the database
       await db.TourImage.bulkCreate(imageRecords);
     }
@@ -142,7 +144,7 @@ exports.deleteTour = async (req, res) => {
     // Delete the tour
     await tour.destroy();
 
-    res.status(200).send({message:"tour deleted", success:true});
+    res.status(200).send({ message: "tour deleted", success: true });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -214,7 +216,7 @@ exports.getFullRecordFromTourById = async (req, res) => {
       // Prepare the hotspots array
       const hotSpotsArr = tourImage.hotspots.map((hotspot) => ({
         pitch: hotspot.pitch,
-        lable: hotspot.name,
+        label: hotspot.name,
         yaw: hotspot.yaw,
         hfov: hotspot.hfov,
         type: hotspot.type,
@@ -290,14 +292,16 @@ exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
 
       // Prepare the hotspots array
       const hotSpotsArr = tourImage.hotspots.map((hotspot) => ({
+        id: hotspot.id,
         pitch: hotspot.pitch,
-        lable: hotspot.name,
+        label: hotspot.name,
         yaw: hotspot.yaw,
         hfov: hotspot.hfov,
         type: hotspot.type,
         tour_image_id: hotspot.tour_image_id,
         hotspot_image_id: hotspot.hotspot_image_id,
         transition: hotspot.linkedTourImage ? hotspot.linkedTourImage.name : null,
+        linked_tour_image_id: hotspot.linkedTourImage ? hotspot.linkedTourImage.id : null,
         arrow_image_url: hotspot.hotspotImage ? hotspot.hotspotImage.url : null,
       }));
       // Assigning order property to hotspots
@@ -308,7 +312,7 @@ exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
       // Construct the scene object
       tourResponse[index] = {
         sceneName: sceneName,
-        tourId:tourId,
+        tourId: tourId,
         scenePanoImg: scenePanoImg,
         initPitch: -2.7342254361971903, // Static value as per your example
         initYaw: -71.59834061057227,    // Static value as per your example
