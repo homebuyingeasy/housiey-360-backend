@@ -15,6 +15,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      projectLogo: {
+        type: DataTypes.STRING,
+        allowNull: true // Store the logo image path
+      },
       createdAt: {
         type: DataTypes.DATE,
         allowNull: false,
@@ -33,7 +37,7 @@ module.exports = (sequelize, DataTypes) => {
 
  // Define associations
   Tour.associate = (models) => {
-    Tour.hasMany(models.TourImage, { foreignKey: 'tourId', as: 'tourImages' });
+    Tour.hasMany(models.TourImage, { foreignKey: 'tourId', as: 'tourImages', onDelete: 'CASCADE'});
   };
 
 

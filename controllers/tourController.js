@@ -1,35 +1,48 @@
 const db = require('../models');
+const fs = require('fs');
+const path = require('path');
+const { Op } = require('sequelize'); // Make sure to import Op for Sequelize operators
 
-// Create a new tour with images
+// Create a new tour with images and projectLogo
 exports.createTour = async (req, res) => {
   try {
     const { name, description } = req.body;
-    if (!name) {
-      return res.status(400).json({ message: 'Name is required.' });
+
+    // Create a new tour
+    const newTour = await db.Tour.create({
+      name,
+      description,
+    });
+
+    // Handle project logo
+    if (req.files['projectLogo'] && req.files['projectLogo'].length > 0) {
+      const logo = req.files['projectLogo'][0];
+      newTour.projectLogo = `/uploads/${logo.filename}`;
+      await newTour.save();
     }
 
-    const tour = await db.Tour.create({ name, description });
-
-    // Process and save each uploaded image
-    if (req.files && req.files.length > 0) {
-      const imageRecords = req.files.map((file, index) => {
-        return {
-          tourId: tour.id,
+    // Handle uploaded images
+    const images = req.files['images'];
+    if (images) {
+      const imageRecords = images.map((file, index) => ({
+        tourId: newTour.id,
           name: req.body[`imagesData[${index}]name`],
           url: `/uploads/${file.filename}`,
-          order: Number(req.body[`imagesData[${index}]order`]),
-        };
-      });
-      // Save all imagesData in the database
+          order: Number(req.body[`imagesData[${index}]order`])
+      }));
+
+      console.log(imageRecords, '+++++++++++')
+      // Bulk create the tour images
       await db.TourImage.bulkCreate(imageRecords);
     }
 
-    res.status(201).json({ message: 'Tour created successfully', tour });
+    res.status(201).json({ message: 'Tour created successfully', tour: newTour });
   } catch (error) {
-    console.log(error, 'error.message')
+    console.error('Create Tour Error:', error);
     res.status(500).json({ message: 'Server error', error });
   }
 };
+
 
 // Get a single tour with images by ID
 exports.getTour = async (req, res) => {
@@ -90,42 +103,72 @@ exports.getToursForDashboard = async (req, res) => {
 };
 
 exports.updateTour = async (req, res) => {
+  const { name, description } = req.body;
   try {
-    const { id } = req.params;
-    const { name, description } = req.body;
+    // Find the existing tour by ID
+    const tourId = req.params.id; // Get the ID from the request parameters
+    const tour = await db.Tour.findByPk(tourId);
 
-    const tour = await db.Tour.findByPk(id,
-      { attributes: { exclude: ['createdAt', 'updatedAt'] } });
     if (!tour) {
-      return res.status(404).json({ message: 'Tour not found.' });
+      return res.status(404).json({ message: 'Tour not found' });
     }
 
-    // Update tour details
-    await tour.update({ name, description });
+    // Update the tour's name and description
+    tour.name = name;
+    tour.description = description;
 
-    // Process and save each uploaded image
-    if (req.files && req.files.length > 0) {
-      // Delete old images
-      await db.TourImage.destroy({ where: { tourId: id } });
+    // Handle project logo
+    if (req.files['projectLogo'] && req.files['projectLogo'].length > 0) {
+      const logo = req.files['projectLogo'][0];
 
-      const imageRecords = req.files.map((file, index) => {
-        console.log(req.body[`imagesData[${index}]name`] + 'name');
-        console.log(Number(req.body[`imagesData[${index}]order`]) + 'order');
-        return {
-          tourId: tour.id,
-          name: req.body[`imagesData[${index}]name`],
-          url: `/uploads/${file.filename}`,
-          order: Number(req.body[`imagesData[${index}]order`]),
-        };
-      });
-      console.log(imageRecords + '++++++++++++++++')
-      // Add new images to the database
-      await db.TourImage.bulkCreate(imageRecords);
+      // If there's a previous logo, delete it from the uploads folder
+      if (tour.projectLogo) {
+        const logoPath = path.join(__dirname, '..', 'uploads', path.basename(tour.projectLogo));
+        if (fs.existsSync(logoPath)) {
+          fs.unlinkSync(logoPath);
+        }
+      }
+
+      tour.projectLogo = `/uploads/${logo.filename}`;
+    }
+
+    // Save updated tour information
+    await tour.save();
+
+    // Handle image updates
+    const images = req.files['images'] || [];
+    const imagesData = JSON.parse(req.body.imagesData); // Parse imagesData from the body
+
+    // Create a set of existing image IDs from imagesData for easy lookup
+    const existingImageIds = imagesData.map(data => data.id).filter(Boolean); // Make sure to filter out any undefined values
+
+    // Delete images that are not in the updated imagesData
+    await db.TourImage.destroy({
+      where: {
+        tour_id: tourId,
+        id: {
+          [Op.not]: existingImageIds
+        }
+      }
+    });
+
+    // Process each image
+    for (let index = 0; index < images.length; index++) {
+      const file = images[index];
+      const imageRecord = {
+        tour_id: tourId,
+        image_url: `/uploads/${file.filename}`,
+        image_name: imagesData[index]?.name || file.originalname, // Get name from imagesData or fallback to original name
+        order: imagesData[index]?.order || index + 1 // Get order from imagesData or default to index
+      };
+
+      await db.TourImage.upsert(imageRecord); // Upsert allows update or insert
     }
 
     res.status(200).json({ message: 'Tour updated successfully', tour });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('Update Tour Error:', error);
+    res.status(500).json({ message: 'Server error', error });
   }
 };
 

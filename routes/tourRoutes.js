@@ -4,8 +4,15 @@ const tourController = require('../controllers/tourController');
 const authenticateToken = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
+// Handle both projectLogo and tourImages
+const uploadFields = upload.fields([
+    { name: 'projectLogo', maxCount: 1 },
+    { name: 'images', maxCount: 30 },
+  ]);
+
+  
 // Create a new tour with multiple images
-router.post('/tours', authenticateToken, upload.array('images', 30), tourController.createTour);
+router.post('/tours', authenticateToken, uploadFields, tourController.createTour);
 
 // Get all tours with their associated images
 router.get('/tours', authenticateToken, tourController.getTours);
@@ -17,7 +24,7 @@ router.get('/tours/dashboard', authenticateToken, tourController.getToursForDash
 router.get('/tours/:id', authenticateToken, tourController.getTour);
 
 // Update a tour with optional new images
-router.put('/tours/:id', authenticateToken, upload.array('images', 30), tourController.updateTour);
+router.put('/tours/:id', authenticateToken, uploadFields, tourController.updateTour);
 
 // Delete a tour and associated images
 router.delete('/tours/:id', authenticateToken, tourController.deleteTour);
