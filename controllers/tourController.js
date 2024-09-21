@@ -31,7 +31,6 @@ exports.createTour = async (req, res) => {
           order: Number(req.body[`imagesData[${index}]order`])
       }));
 
-      console.log(imageRecords, '+++++++++++')
       // Bulk create the tour images
       await db.TourImage.bulkCreate(imageRecords);
     }
