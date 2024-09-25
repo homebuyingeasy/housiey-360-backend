@@ -320,7 +320,7 @@ exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
         },
       ],
     });
-
+    console.log(tour)
     if (!tour) {
       return res.status(404).json({ message: 'Tour not found' });
     }
@@ -359,6 +359,7 @@ exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
         initPitch: -2.7342254361971903, // Static value as per your example
         initYaw: -71.59834061057227,    // Static value as per your example
         hotSpotsArr: hotSpotsArr,
+        projectLogo:tour.projectLogo
       };
     });
 
