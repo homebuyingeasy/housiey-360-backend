@@ -21,10 +21,17 @@ exports.createUser = async (req, res) => {
         // Exclude the password from the response
         const userResponse = user.toJSON();
         delete userResponse.password;
+        delete userResponse.createdAt;
+        delete userResponse.updatedAt;
 
-        res.status(201).json(userResponse);
+        res.status(201).json({ message: 'User created successfully', userResponse });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        // Check if the error is a unique constraint error
+        if (error.name === 'SequelizeUniqueConstraintError') {
+            // Send a custom error message for duplicate email
+            return res.status(400).json({ message: 'Email already in use.' });
+        }
+        res.status(500).json({ message: error.errors[0].message });
     }
 };
 
