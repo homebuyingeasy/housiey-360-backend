@@ -103,16 +103,16 @@ exports.getToursForDashboard = async (req, res) => {
 
 exports.updateTour = async (req, res) => {
   const { name, description } = req.body;
+
   try {
-    // Find the existing tour by ID
-    const tourId = req.params.id; // Get the ID from the request parameters
+    const tourId = req.params.id;
     const tour = await db.Tour.findByPk(tourId);
 
     if (!tour) {
       return res.status(404).json({ message: 'Tour not found' });
     }
 
-    // Update the tour's name and description
+    // Update tour basic info
     tour.name = name;
     tour.description = description;
 
@@ -120,7 +120,6 @@ exports.updateTour = async (req, res) => {
     if (req.files['projectLogo'] && req.files['projectLogo'].length > 0) {
       const logo = req.files['projectLogo'][0];
 
-      // If there's a previous logo, delete it from the uploads folder
       if (tour.projectLogo) {
         const logoPath = path.join(__dirname, '..', 'uploads', path.basename(tour.projectLogo));
         if (fs.existsSync(logoPath)) {
@@ -131,40 +130,35 @@ exports.updateTour = async (req, res) => {
       tour.projectLogo = `/uploads/${logo.filename}`;
     }
 
-    // Save updated tour information
+    // Save tour data
     await tour.save();
 
     // Handle image updates
-    const images = req.files['images'] || [];
-    const imagesData = JSON.parse(req.body.imagesData); // Parse imagesData from the body
+    const images = req.files['images'];
+    const imagesData = req.body.imagesData ? JSON.parse(JSON.stringify(req.body.imagesData)) : {}; // Parse imagesData if sent as a complex key
 
-    // Create a set of existing image IDs from imagesData for easy lookup
-    const existingImageIds = imagesData.map(data => data.id).filter(Boolean); // Make sure to filter out any undefined values
+    if (images && images.length > 0) {
+      for (let index = 0; index < images.length; index++) {
+        const file = images[index];
 
-    // Delete images that are not in the updated imagesData
-    await db.TourImage.destroy({
-      where: {
-        tour_id: tourId,
-        id: {
-          [Op.not]: existingImageIds
-        }
+        const imageName = imagesData[`${index}`] && imagesData[`${index}`]['name'] 
+            ? imagesData[`${index}`]['name'] 
+            : file.originalname;
+        const imageOrder = imagesData[`${index}`] && imagesData[`${index}`]['order'] 
+            ? imagesData[`${index}`]['order'] 
+            : index + 1;
+
+        const imageRecord = {
+          tourId: tourId,
+          url: `/uploads/${file.filename}`,
+          name: imageName, // Use the provided image name from imagesData
+          order: imageOrder // Use the provided order from imagesData
+        };
+        await db.TourImage.upsert(imageRecord);
       }
-    });
-
-    // Process each image
-    for (let index = 0; index < images.length; index++) {
-      const file = images[index];
-      const imageRecord = {
-        tour_id: tourId,
-        image_url: `/uploads/${file.filename}`,
-        image_name: imagesData[index]?.name || file.originalname, // Get name from imagesData or fallback to original name
-        order: imagesData[index]?.order || index + 1 // Get order from imagesData or default to index
-      };
-
-      await db.TourImage.upsert(imageRecord); // Upsert allows update or insert
     }
 
-    res.status(200).json({ message: 'Tour updated successfully', tour });
+    res.status(200).json({ message: 'Tour updated successfully' });
   } catch (error) {
     console.error('Update Tour Error:', error);
     res.status(500).json({ message: 'Server error', error });
