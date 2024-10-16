@@ -29,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      hotspot_image_id: {
+      rotation_angle: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
@@ -42,7 +42,6 @@ module.exports = (sequelize, DataTypes) => {
     Hotspot.associate = function(models) {
       Hotspot.belongsTo(models.TourImage, { as: 'tourImage', foreignKey: 'tour_image_id' });
       Hotspot.belongsTo(models.TourImage, { as: 'linkedTourImage', foreignKey: 'linked_tour_image_id' });
-      Hotspot.belongsTo(models.HotspotImage, { as: 'hotspotImage', foreignKey: 'hotspot_image_id' });
     };
   
     return Hotspot;

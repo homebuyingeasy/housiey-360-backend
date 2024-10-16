@@ -5,7 +5,6 @@ const db = require('./models');
 const userRoutes = require('./routes/userRoutes');
 const tourRoutes = require('./routes/tourRoutes');
 const hotspotRoutes = require('./routes/hotspotRoutes');
-const hotspotImageRoutes = require('./routes/hotspotImageRoutes');
 
 dotenv.config();
 
@@ -17,7 +16,6 @@ app.use(express.json());
 app.use('/api', userRoutes);
 app.use('/api', tourRoutes);
 app.use('/api', hotspotRoutes);
-app.use('/api', hotspotImageRoutes);
 app.use('/uploads', express.static('uploads'));
 
 // Sync the database and start the server

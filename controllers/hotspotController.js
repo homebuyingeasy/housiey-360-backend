@@ -2,7 +2,7 @@ const db = require('../models');
 
 exports.addHotspot = async (req, res) => {
   try {
-    const { pitch, yaw, hfov, type, tour_image_id, name, hotspot_image_id, linked_tour_image_id } = req.body;
+    const { pitch, yaw, hfov, type, tour_image_id, name, rotation_angle, linked_tour_image_id } = req.body;
 
     // Check if tour_image_id exists
     const tourImage = await db.TourImage.findByPk(tour_image_id);
@@ -27,11 +27,11 @@ exports.addHotspot = async (req, res) => {
       type,
       tour_image_id,
       name,
-      hotspot_image_id,
+      rotation_angle,
       linked_tour_image_id: linkedTourImage ? linkedTourImage.id : null // Ensure linked_tour_image_id is null if not valid
     });
 
-    res.status(201).json({success: true, message: 'New Hot Spot Created', hotspot});
+    res.status(201).json({success: true, message: 'New Hotspot created', hotspot});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -54,12 +54,7 @@ exports.getHotspotsByTourImageId = async (req, res) => {
           model: db.TourImage,
           as: 'linkedTourImage',  // Make sure the alias matches the one defined in the association
           attributes: ['id', 'url', 'name'],
-        },
-        {
-          model: db.HotspotImage,
-          as: 'hotspotImage',  // Make sure the alias matches the one defined in the association
-          attributes: ['id', 'url', 'name'],
-        },
+        }
       ],
     });
 
@@ -92,7 +87,7 @@ exports.getHotspotById = async (req, res) => {
 exports.updateHotspot = async (req, res) => {
     try {
         const { id } = req.params;
-        const { pitch, yaw, hfov, type, tour_image_id, name, hotspot_image_id, linked_tour_image_id } = req.body;
+        const { pitch, yaw, hfov, type, tour_image_id, name, rotation_angle, linked_tour_image_id } = req.body;
 
         const hotspot = await db.Hotspot.findByPk(id);
 
@@ -108,11 +103,11 @@ exports.updateHotspot = async (req, res) => {
             type,
             tour_image_id,
             name,
-            hotspot_image_id,
+            rotation_angle,
             linked_tour_image_id,
         });
 
-        res.status(200).json({success: true, message: 'Hot Spot Update', hotspot});
+        res.status(200).json({success: true, message: 'Hotspot update', hotspot});
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

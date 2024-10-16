@@ -26,9 +26,9 @@ exports.createTour = async (req, res) => {
     if (images) {
       const imageRecords = images.map((file, index) => ({
         tourId: newTour.id,
-          name: req.body[`imagesData[${index}]name`],
-          url: `/uploads/${file.filename}`,
-          order: Number(req.body[`imagesData[${index}]order`])
+        name: req.body[`imagesData[${index}]name`],
+        url: `/uploads/${file.filename}`,
+        order: Number(req.body[`imagesData[${index}]order`])
       }));
 
       // Bulk create the tour images
@@ -48,9 +48,15 @@ exports.getTour = async (req, res) => {
   try {
     const { id } = req.params;
     const tour = await db.Tour.findByPk(id, {
-      include: [{ model: db.TourImage, as: 'tourImages', attributes: { exclude: ['createdAt', 'updatedAt'] } }],
+      include: [
+        {
+          model: db.TourImage,
+          as: 'tourImages',
+          attributes: { exclude: ['createdAt', 'updatedAt'] },
+        }
+      ],
       attributes: { exclude: ['createdAt', 'updatedAt'] },
-
+      order: [[{ model: db.TourImage, as: 'tourImages' }, 'order', 'ASC']],
     });
 
     if (!tour) {
@@ -141,12 +147,12 @@ exports.updateTour = async (req, res) => {
       for (let index = 0; index < images.length; index++) {
         const file = images[index];
 
-        const imageName = imagesData[`${index}`] && imagesData[`${index}`]['name'] 
-            ? imagesData[`${index}`]['name'] 
-            : file.originalname;
-        const imageOrder = imagesData[`${index}`] && imagesData[`${index}`]['order'] 
-            ? imagesData[`${index}`]['order'] 
-            : index + 1;
+        const imageName = imagesData[`${index}`] && imagesData[`${index}`]['name']
+          ? imagesData[`${index}`]['name']
+          : file.originalname;
+        const imageOrder = imagesData[`${index}`] && imagesData[`${index}`]['order']
+          ? imagesData[`${index}`]['order']
+          : index + 1;
 
         const imageRecord = {
           tourId: tourId,
@@ -222,11 +228,6 @@ exports.getFullRecordFromTourById = async (req, res) => {
               as: 'hotspots',
               include: [
                 {
-                  model: db.HotspotImage,
-                  as: 'hotspotImage',
-                  attributes: ['url'], // Select the hotspot image URL
-                },
-                {
                   model: db.TourImage,
                   as: 'linkedTourImage',
                   attributes: ['name'], // Select the linked tour image name
@@ -257,9 +258,8 @@ exports.getFullRecordFromTourById = async (req, res) => {
         hfov: hotspot.hfov,
         type: hotspot.type,
         tour_image_id: hotspot.tour_image_id,
-        hotspot_image_id: hotspot.hotspot_image_id,
+        rotation_angle: hotspot.rotation_angle,
         transition: hotspot.linkedTourImage ? hotspot.linkedTourImage.name : null,
-        arrow_image_url: hotspot.hotspotImage ? hotspot.hotspotImage.url : null,
       }));
       // Assigning order property to hotspots
       hotSpotsArr.forEach((hotspot, index) => {
@@ -299,11 +299,6 @@ exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
               as: 'hotspots',
               include: [
                 {
-                  model: db.HotspotImage,
-                  as: 'hotspotImage',
-                  attributes: ['url', 'id'], // Select the hotspot image URL
-                },
-                {
                   model: db.TourImage,
                   as: 'linkedTourImage',
                   attributes: ['name', 'id'], // Select the linked tour image name
@@ -335,10 +330,9 @@ exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
         hfov: hotspot.hfov,
         type: hotspot.type,
         tour_image_id: hotspot.tour_image_id,
-        hotspot_image_id: hotspot.hotspot_image_id,
+        rotation_angle: hotspot.rotation_angle,
         transition: hotspot.linkedTourImage ? hotspot.linkedTourImage.name : null,
         linked_tour_image_id: hotspot.linkedTourImage ? hotspot.linkedTourImage.id : null,
-        arrow_image_url: hotspot.hotspotImage ? hotspot.hotspotImage.url : null,
       }));
       // Assigning order property to hotspots
       hotSpotsArr.forEach((hotspot, index) => {
@@ -353,7 +347,7 @@ exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
         initPitch: -2.7342254361971903, // Static value as per your example
         initYaw: -71.59834061057227,    // Static value as per your example
         hotSpotsArr: hotSpotsArr,
-        projectLogo:tour.projectLogo
+        projectLogo: tour.projectLogo
       };
     });
 
