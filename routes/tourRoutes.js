@@ -34,7 +34,7 @@ router.delete('/tours/images/:id', authenticateToken, tourController.deleteTourI
 
 router.get('/tours/full/:id', authenticateToken, tourController.getFullRecordFromTourById);
 
-router.get('/tours/record/backend/:id', authenticateToken, tourController.getFullRecordFromTourByIdForBackend);
+router.get('/tours/record/backend/:id', tourController.getFullRecordFromTourByIdForBackend);
 
 
 

@@ -35,7 +35,7 @@ exports.createTour = async (req, res) => {
       await db.TourImage.bulkCreate(imageRecords);
     }
 
-    res.status(201).json({ message: 'Tour created successfully', tour: newTour });
+    res.status(201).json({ message: 'Tour created successfully', success: true, tour: newTour });
   } catch (error) {
     console.error('Create Tour Error:', error);
     res.status(500).json({ message: 'Server error', error });
@@ -158,7 +158,7 @@ exports.updateTour = async (req, res) => {
       }
     }
 
-    res.status(200).json({ message: 'Tour updated successfully' });
+    res.status(200).json({ message: 'Tour updated successfully', success: true });
   } catch (error) {
     console.error('Update Tour Error:', error);
     res.status(500).json({ message: 'Server error', error });

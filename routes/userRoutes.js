@@ -9,7 +9,7 @@ router.post('/users/forgot-password', userController.forgotPassword);
 router.post('/users/reset-password/:token', userController.resetPassword);
 
 // Protected Routes
-router.post('/users', authenticateToken, userController.createUser);
+router.post('/users',  userController.createUser);
 router.get('/users', authenticateToken, userController.getUsers);
 router.get('/users/:id', authenticateToken, userController.getUser);
 router.put('/users/:id', authenticateToken, userController.updateUser);

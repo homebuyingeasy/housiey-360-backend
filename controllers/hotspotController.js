@@ -31,7 +31,7 @@ exports.addHotspot = async (req, res) => {
       linked_tour_image_id: linkedTourImage ? linkedTourImage.id : null // Ensure linked_tour_image_id is null if not valid
     });
 
-    res.status(201).json(hotspot);
+    res.status(201).json({success: true, message: 'New Hot Spot Created', hotspot});
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -112,7 +112,7 @@ exports.updateHotspot = async (req, res) => {
             linked_tour_image_id,
         });
 
-        res.status(200).json(hotspot);
+        res.status(200).json({success: true, message: 'Hot Spot Update', hotspot});
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
