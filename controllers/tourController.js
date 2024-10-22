@@ -2,15 +2,17 @@ const db = require('../models');
 const fs = require('fs');
 const path = require('path');
 const { Op } = require('sequelize'); // Make sure to import Op for Sequelize operators
+const { slugGenerator } = require('../utils/commonFun');
 
 // Create a new tour with images and projectLogo
 exports.createTour = async (req, res) => {
   try {
     const { name, description } = req.body;
-
+    const slug = slugGenerator(name);
     // Create a new tour
     const newTour = await db.Tour.create({
       name,
+      slug,
       description,
     });
 
@@ -121,6 +123,7 @@ exports.updateTour = async (req, res) => {
     // Update tour basic info
     tour.name = name;
     tour.description = description;
+    tour.slug = slugGenerator(name);
 
     // Handle project logo
     if (req.files['projectLogo'] && req.files['projectLogo'].length > 0) {
@@ -354,5 +357,73 @@ exports.getFullRecordFromTourByIdForBackend = async (req, res) => {
     res.status(200).json(tourResponse);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+exports.getFullRecordFromTourBySlugForBackend = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    // Efficiently fetch the tour and associated data with minimum fields
+    const tour = await db.Tour.findOne({
+      where: { slug },
+      attributes: ['id', 'slug', 'projectLogo'],  // Only retrieve necessary fields
+      include: [
+        {
+          model: db.TourImage,
+          as: 'tourImages',
+          attributes: ['id', 'name', 'url'],  // Only select required fields
+          include: [
+            {
+              model: db.Hotspot,
+              as: 'hotspots',
+              attributes: ['id', 'pitch', 'yaw', 'hfov', 'name', 'type', 'tour_image_id', 'rotation_angle'],  // Minimized fields
+              include: [
+                {
+                  model: db.TourImage,
+                  as: 'linkedTourImage',
+                  attributes: ['name', 'id'], // Only select linked tour image's name and id
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    // Return 404 if tour not found
+    if (!tour) {
+      return res.status(404).json({ message: 'Tour not found' });
+    }
+
+    // Efficiently map the tour response
+    const tourResponse = tour.tourImages.map((tourImage, index) => ({
+      sceneName: tourImage.name,
+      tourId: tourImage.id,
+      scenePanoImg: tourImage.url,
+      initPitch: -2.7342254361971903,  // Static value for initPitch
+      initYaw: -71.59834061057227,     // Static value for initYaw
+      hotSpotsArr: tourImage.hotspots.map((hotspot, idx) => ({
+        id: hotspot.id,
+        pitch: hotspot.pitch,
+        label: hotspot.name,
+        yaw: hotspot.yaw,
+        hfov: hotspot.hfov,
+        type: hotspot.type,
+        tour_image_id: hotspot.tour_image_id,
+        rotation_angle: hotspot.rotation_angle,
+        transition: hotspot.linkedTourImage ? hotspot.linkedTourImage.name : null,
+        linked_tour_image_id: hotspot.linkedTourImage ? hotspot.linkedTourImage.id : null,
+        order: idx + 1, // Assign order during map
+      })),
+      projectLogo: tour.projectLogo, // Add project logo directly
+    }));
+
+    // Return the response with a 200 status
+    return res.status(200).json(tourResponse);
+
+  } catch (error) {
+    // Catch any unexpected errors and return a 500 status
+    return res.status(500).json({ message: error.message });
   }
 };

@@ -36,6 +36,8 @@ router.get('/tours/full/:id', authenticateToken, tourController.getFullRecordFro
 
 router.get('/tours/record/backend/:id', tourController.getFullRecordFromTourByIdForBackend);
 
+router.get('/tours/record/backend/slug/:slug', tourController.getFullRecordFromTourBySlugForBackend);
+
 
 
 module.exports = router;
